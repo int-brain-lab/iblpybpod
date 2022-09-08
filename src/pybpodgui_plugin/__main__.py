@@ -67,6 +67,20 @@ except Exception as err:
 
 
 def start():
+    import logging.config
+    current_dir = Path(__file__).parent
+    src_dir = current_dir.parent
+    logging_yml_loc = src_dir / "logger.yml"
+    logging.config.dictConfig(logging_yml_loc)
+    logger = logging.getLogger("iblpybpod")
+
+    # 'application' code
+    logger.debug('debug message')
+    logger.info('info message')
+    logger.warning('warn message')
+    logger.error('error message')
+    logger.critical('critical message')
+
     import pyforms
     pyforms.start_app(Editor, conf.GENERIC_EDITOR_WINDOW_GEOMETRY)
 

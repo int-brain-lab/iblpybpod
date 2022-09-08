@@ -1,0 +1,24 @@
+version: 1
+formatters:
+  simple:
+    format: "%(asctime)s | %(levelname)s | %(name)s | %(funcName)s | %(message)s"
+    datefmt: "%d/%m/%Y %I:%M:%S"
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: simple
+    stream: ext://sys.stdout
+  file:
+    class: logging.handlers.RotatingFileHandler
+    formatter: simple
+    filename: app.log
+    maxBytes: 1024
+    backupCount: 3
+loggers:
+  iblpybpod:
+    level: INFO
+    handlers: [console, file]
+    propagate: no
+root:
+  level: DEBUG
+  handlers: [console]
