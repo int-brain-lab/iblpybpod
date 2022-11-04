@@ -1,6 +1,7 @@
 import array
 import math
 import time
+import traceback
 
 import numpy as np
 from enum import Enum, IntEnum
@@ -470,7 +471,7 @@ class SoundCardModule(object):
             ret = self._dev.read(0x81, metadata_cmd_reply, 1000)
         except usb.core.USBError as e:
             # TODO: we probably should try again
-
+            traceback.print_exc()
             print("something went wrong while reading from the device")
             return
 
@@ -526,7 +527,7 @@ class SoundCardModule(object):
                 ret = self._dev.read(0x81, data_cmd_reply, 400)
             except usb.core.USBError as e:
                 # TODO: we probably should try again
-
+                traceback.print_exc()
                 print("something went wrong while reading from the device")
                 return
 
@@ -569,7 +570,7 @@ class SoundCardModule(object):
             ret = self._dev.read(0x81, read_reply_cmd, 100)
         except usb.core.USBError as e:
             # TODO: we probably should try again
-
+            traceback.print_exc()
             print("something went wrong while reading from the device")
             return
 
