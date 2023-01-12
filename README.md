@@ -1,6 +1,6 @@
 # iblpybpod #
 
-**version:** 2.0.0
+**version:** 2
 
 iblpybpod is a GUI application that enables interaction with the Bpod device from [Sanworks](https://sanworks.io/). Much credit 
 and thanks go to the original creators of the [pybpod project](https://github.com/pybpod/pybpod).

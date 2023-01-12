@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 PYTHON_VERSION_REQ = ">3.8.0"
-IBLPYBPOD_CURRENT_VERSION = "2.0.0"
+IBLPYBPOD_CURRENT_VERSION = "2.0.1"
 
 with open("README.md", "r") as f:
     long_description = f.read()
