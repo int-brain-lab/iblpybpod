@@ -1,6 +1,3 @@
-# !/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 import logging
 from confapp import conf
 from datetime import datetime as datetime_now
@@ -104,26 +101,8 @@ class Session(object):
             sys.stderr = StderrBuffer(self)
             streams += [self.ostdout]
 
-        self.csvstream = StreamsWrapper(streams)
-        self.csvwriter = csv.writer(
-            self.csvstream,
-            columns_headers=[
-                "TYPE",
-                "PC-TIME",
-                "BPOD-INITIAL-TIME",
-                "BPOD-FINAL-TIME",
-                "MSG",
-                "+INFO",
-            ],
-            software="PyBpod API v" + str(pybpodapi.__version__),
-            def_url="http://pybpod-api.readthedocs.org",
-            def_text="This file contains data recorded during a session from the PyBpod system",
-        )
 
     def __del__(self):
-
-        self.csvstream.close()
-
         sys.stdout = self.ostdout
         sys.stderr = self.ostderr
 
