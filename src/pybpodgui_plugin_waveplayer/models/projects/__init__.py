@@ -1,1 +1,0 @@
-from .projects_waveplayer import ProjectsWavePlayer as Projects

@@ -1,1 +1,0 @@
-from pybpodgui_plugin_session_history.models.session.session_treenode import SessionTreeNode as Session

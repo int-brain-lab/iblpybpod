@@ -1,17 +1,8 @@
 aenum
-AnyQt
 confapp
-markdown2
 matplotlib
 numpy
-opencv-python
 pandas
-PyOpenGL
-PyQt5
-PyQtWebEngine
 pyserial
 pyusb
 PyYAML
-QScintilla
-scipy
-visvis
