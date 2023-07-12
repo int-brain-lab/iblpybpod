@@ -30,7 +30,7 @@ class BpodCOMProtocol(BpodBase):
 
     """
 
-    def __init__(self, serial_port=None, sync_channel=None, sync_mode=None):
+    def __init__(self, serial_port=None, sync_channel=None, sync_mode=None, connect=True):
         super(BpodCOMProtocol, self).__init__(serial_port, sync_channel, sync_mode)
 
         self._arcom = None  # type: ArCOM
@@ -39,7 +39,7 @@ class BpodCOMProtocol(BpodBase):
         # used to keep the list of msg ids sent using the load_serial_message function
         self.msg_id_list = [False for i in range(255)]
 
-        if self.serial_port:
+        if self.serial_port and connect:
             self.open()
 
     def open(self):
