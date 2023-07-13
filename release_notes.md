@@ -1,4 +1,7 @@
 # **Release Notes**
+## **v3.0.1 (2023-07-13)**
+- fix for bpod disconnect (see v3.0.0)
+
 ## **v3.0.0 (2023-07-13)**
 - removed all GUI
 - add bpod disconnect if handshake not performed properly
