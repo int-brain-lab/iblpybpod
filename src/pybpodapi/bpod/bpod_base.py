@@ -134,8 +134,17 @@ class BpodBase(object):
         self._bpodcom_connect(self.serial_port, self.baudrate)
 
         if not self._bpodcom_handshake():
-            raise BpodErrorException('Error: Bpod failed to confirm connectivity. Please reset Bpod and try again.')
-
+            # here we detect an issue with the current state, we'll throw an error, but before
+            # doing anything anything about it we'll disconnect the device so that future instantiation
+            # will avoid this error
+            try:
+                for _ in range(10):  # Josh made me do it
+                    self._bpodcom_disconnect()
+                self._arcom.serial_object.close()
+            finally:
+                # if after this we still don' t have connection, raise
+                if not self._bpodcom_handshake():
+                    raise BpodErrorException('Error: Bpod failed to confirm connectivity. Please reset Bpod and try again.')
         #########################################################
         ### check the firmware version ##############################
         #########################################################

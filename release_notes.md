@@ -1,4 +1,7 @@
 # **Release Notes**
+## **v3.0.0 (2023-07-13)**
+- removed all GUI
+- add bpod disconnect if handshake not performed properly
 
 ## **v2.0.3 (2023-02-09)**
 - removed captures of stderr and stdout from pybpodapi
