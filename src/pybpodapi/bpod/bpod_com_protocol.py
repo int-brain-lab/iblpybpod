@@ -31,7 +31,7 @@ class BpodCOMProtocol(BpodBase):
     """
 
     def __init__(self, serial_port=None, sync_channel=None, sync_mode=None, connect=True, disable_behavior_ports=None):
-        super(BpodCOMProtocol, self).__init__(serial_port, sync_channel, sync_mode, disable_behavior_ports=disable_BNC_inputs)
+        super(BpodCOMProtocol, self).__init__(serial_port, sync_channel, sync_mode, disable_behavior_ports=disable_behavior_ports)
 
         self._arcom = None  # type: ArCOM
         self.bpod_com_ready = False
@@ -261,8 +261,11 @@ class BpodCOMProtocol(BpodBase):
             hardware.inputs_enabled[i] = settings.BPOD_WIRED_PORTS_ENABLED[j]
 
         for j, i in enumerate(hardware.behavior_inputports_indexes):
-            hardware.inputs_enabled[i] = j not in self._disable_behavior_ports and \
-                                         settings.BPOD_BEHAVIOR_PORTS_ENABLED[j]
+            if self._disable_behavior_ports:
+                hardware.inputs_enabled[i] = j not in self._disable_behavior_ports and \
+                                             settings.BPOD_BEHAVIOR_PORTS_ENABLED[j]
+            else:
+                hardware.inputs_enabled[i] = settings.BPOD_BEHAVIOR_PORTS_ENABLED[j]
         #############################################################################################
 
         logger.debug("Requesting ports enabling (%s)", SendMessageHeader.ENABLE_PORTS)
