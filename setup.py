@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 PYTHON_VERSION_REQ = ">3.10.0"
-IBLPYBPOD_CURRENT_VERSION = "3.0.1"
+IBLPYBPOD_CURRENT_VERSION = "3.0.2"
 
 long_description = """
 iblpybpod is a GUI application that enables interaction with the Bpod device from [Sanworks](https://sanworks.io/). Much credit 

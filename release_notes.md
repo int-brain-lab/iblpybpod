@@ -1,4 +1,7 @@
 # **Release Notes**
+## **v3.0.2 (2023-09-11)**
+- add argument to disable behavior ports
+
 ## **v3.0.1 (2023-07-13)**
 - fix for bpod disconnect (see v3.0.0)
 
@@ -121,4 +124,3 @@
 - New modules and plugins
     - pybpod-soundcard-module (v0.1.4). More details on this module in: https://pybpod-soundcard-module.readthedocs.io/
     - pybpod-gui-plugin-emulator (v0.1). More details on this module in: https://pybpod-gui-plugin-emulator.readthedocs.io/en/v0.1.0/
-
