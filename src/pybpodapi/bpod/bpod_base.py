@@ -59,7 +59,7 @@ class BpodBase(object):
 
     CHECK_STATE_MACHINE_COUNTER = 0
 
-    def __init__(self, serial_port=None, sync_channel=None, sync_mode=None, net_port=None):
+    def __init__(self, serial_port=None, sync_channel=None, sync_mode=None, net_port=None, disable_behavior_ports=None):
         self._session = self.create_session()
 
         self.serial_port = serial_port if serial_port is not None else settings.PYBPOD_SERIAL_PORT
@@ -70,6 +70,7 @@ class BpodBase(object):
         self._hardware = Hardware()    # type: Hardware
         self.bpod_modules = None          # type: BpodModules
         self.bpod_start_timestamp = None
+        self._disable_behavior_ports: list = disable_behavior_ports
 
         self._new_sma_sent = False         # type: bool
         self._skip_all_trials = False
