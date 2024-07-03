@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-PYTHON_VERSION_REQ = ">3.10.0"
+PYTHON_VERSION_REQ = ">=3.10.0"
 IBLPYBPOD_CURRENT_VERSION = "3.0.2"
 
 long_description = """
