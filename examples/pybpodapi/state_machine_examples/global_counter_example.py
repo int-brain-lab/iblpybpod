@@ -32,14 +32,20 @@ sma.add_state(
 sma.add_state(
 	state_name='Port1Lit',  # Infinite loop (with next state). Only a global counter can save us.
 	state_timer=.25,
-	state_change_conditions={Bpod.Events.Tup: 'Port3Lit', 'GlobalCounter1_End': 'exit'},
+	state_change_conditions={Bpod.Events.Tup: 'Port3Lit', 'GlobalCounter1_End': 'ExitTask'},
 	output_actions=[(Bpod.OutputChannels.PWM1, 255)])
 
 sma.add_state(
 	state_name='Port3Lit',
 	state_timer=.25,
-	state_change_conditions={Bpod.Events.Tup: 'Port1Lit', 'GlobalCounter1_End': 'exit'},
+	state_change_conditions={Bpod.Events.Tup: 'Port1Lit', 'GlobalCounter1_End': 'ExitTask'},
 	output_actions=[(Bpod.OutputChannels.PWM3, 255)])
+
+sma.add_state(
+	state_name='ExitTask',
+	state_timer=.25,
+	state_change_conditions={Bpod.Events.Tup: 'exit'},
+)
 
 my_bpod.send_state_machine(sma)
 

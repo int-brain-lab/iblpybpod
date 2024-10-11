@@ -543,6 +543,21 @@ class BpodBase(object):
                                     state_change_indexes.append(len(current_trial.events_occurrences) - 1)
                                 transition_event_found = True
 
+                    # global counters matrix
+                    if not transition_event_found:
+                        for transition in sma.global_counters.matrix[sma.current_state]:
+                            if transition[0] == event_id:
+                                if sma.use_255_back_signal and transition[1] == 255:
+                                    sma.current_state = current_trial.states[-2]
+                                else:
+                                    sma.current_state = transition[1]
+
+                                if not math.isnan(sma.current_state):
+                                    logger.debug("adding states global counters matrix")
+                                    current_trial.states.append(sma.current_state)
+                                    state_change_indexes.append(len(current_trial.events_occurrences) - 1)
+                                transition_event_found = True
+
                 logger.debug("States indexes: %s", current_trial.states)
 
             if transition_event_found and not math.isnan(sma.current_state):
