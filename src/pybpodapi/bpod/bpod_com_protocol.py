@@ -142,8 +142,7 @@ class BpodCOMProtocol(BpodBase):
 
         self._arcom.write_char(SendMessageHeader.FIRMWARE_VERSION)
 
-        fw_version = self._arcom.read_uint16()  # type: int
-        machine_type = self._arcom.read_uint16()  # type: int
+        fw_version, machine_type = self._arcom.read_formatted('<HH')
 
         logger.debug("Firmware version: %s", fw_version)
         logger.debug("Machine type: %s", machine_type)

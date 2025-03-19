@@ -133,37 +133,25 @@ class ArCOM(object):
         return struct.unpack(format_string, data)
 
     def read_byte(self) -> bytes:
-        data = self.serial_object.read(1)
-        return data
+        return self.serial_object.read(1)
 
     def read_char(self) -> str:
-        data = self.serial_object.read(1)
-        return data.decode("utf-8")
+        return self.serial_object.read(1).decode("utf-8")
 
     def read_uint8(self) -> int:
-        data = self.serial_object.read(1)
-        message, = struct.unpack('<B', data)
-        return message
+        return self.read_formatted('<B')[0]
 
     def read_uint16(self) -> int:
-        data = self.serial_object.read(2)
-        message, = struct.unpack('<H', data)
-        return message
+        return self.read_formatted('<H')[0]
 
     def read_uint32(self) -> int:
-        data = self.serial_object.read(4)
-        message, = struct.unpack('<I', data)
-        return message
+        return self.read_formatted('<I')[0]
 
     def read_uint64(self) -> int:
-        data = self.serial_object.read(8)
-        message, = struct.unpack('<Q', data)
-        return message
+        return self.read_formatted('<Q')[0]
 
     def read_float32(self) -> float:
-        data = self.serial_object.read(4)
-        message = struct.unpack("<f", data)
-        return message[0]
+        return self.read_formatted('<f')[0]
 
     ##############################################################
     ## READ ARRAY ################################################
@@ -178,21 +166,16 @@ class ArCOM(object):
         return list(data.decode('UTF8'))
 
     def read_uint8_array(self, array_len=1) -> list[int]:
-        data = self.serial_object.read(array_len)
-        return list(struct.unpack('<' + 'B' * array_len, data))
+        return list(self.read_formatted('<' + 'B' * array_len))
 
     def read_uint16_array(self, array_len=1) -> list[int]:
-        data = self.serial_object.read(array_len)
-        return list(struct.unpack('<' + 'H' * array_len * 2, data))
+        return list(self.read_formatted('<' + 'H' * array_len))
 
     def read_uint32_array(self, array_len=1) -> list[int]:
-        data = self.serial_object.read(array_len)
-        return list(struct.unpack('<' + 'I' * array_len * 4, data))
+        return list(self.read_formatted('<' + 'I' * array_len))
 
     def read_uint64_array(self, array_len=1) -> list[int]:
-        data = self.serial_object.read(array_len)
-        return list(struct.unpack('<' + 'Q' * array_len * 8, data))
+        return list(self.read_formatted('<' + 'Q' * array_len))
 
     def read_float32_array(self, array_len=1) -> list[float]:
-        data = self.serial_object.read(array_len)
-        return list(struct.unpack('<' + 'f' * array_len * 4, data))
+        return list(self.read_formatted('<' + 'f' * array_len))
