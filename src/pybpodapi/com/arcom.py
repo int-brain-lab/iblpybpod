@@ -127,92 +127,72 @@ class ArCOM(object):
     ## READ BYTE #################################################
     ##############################################################
 
-    def read_byte(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.BYTE.size)
-        return message_bytes
+    def read_formatted(self, format_string: str) -> tuple:
+        n_bytes = struct.calcsize(format_string)
+        data = self.serial_object.read(n_bytes)
+        return struct.unpack(format_string, data)
 
-    def read_char(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.CHAR.size)
+    def read_byte(self) -> bytes:
+        data = self.serial_object.read(1)
+        return data
 
-        return message_bytes.decode("utf-8")
+    def read_char(self) -> str:
+        data = self.serial_object.read(1)
+        return data.decode("utf-8")
 
-    def read_uint8(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT8.size)
-        # logger.debug("Read %s bytes: %s", len(message_bytes), message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
+    def read_uint8(self) -> int:
+        data = self.serial_object.read(1)
+        message, = struct.unpack('<B', data)
         return message
 
-    def read_uint16(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT16.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT16.size, message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
+    def read_uint16(self) -> int:
+        data = self.serial_object.read(2)
+        message, = struct.unpack('<H', data)
         return message
 
-    def read_uint32(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT32.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT32.size, message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
+    def read_uint32(self) -> int:
+        data = self.serial_object.read(4)
+        message, = struct.unpack('<I', data)
         return message
 
-    def read_uint64(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT64.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT32.size, message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
+    def read_uint64(self) -> int:
+        data = self.serial_object.read(8)
+        message, = struct.unpack('<Q', data)
         return message
 
-    def read_float32(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.FLOAT32.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT32.size, message_bytes)
-        message = struct.unpack("<f", message_bytes)
+    def read_float32(self) -> float:
+        data = self.serial_object.read(4)
+        message = struct.unpack("<f", data)
         return message[0]
 
     ##############################################################
     ## READ ARRAY ################################################
     ##############################################################
 
-    def read_bytes_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_byte()
-            message_array.append(message_bytes)
-        return message_array
+    def read_bytes_array(self, array_len=1) -> list[bytes]:
+        data = self.serial_object.read(array_len)
+        return [bytes([byte]) for byte in data]
 
-    def read_char_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_char()
-            message_array.append(message_bytes)
+    def read_char_array(self, array_len=1) -> list[str]:
+        data = self.serial_object.read(array_len)
+        return list(data.decode('UTF8'))
 
-        return message_array
+    def read_uint8_array(self, array_len=1) -> list[int]:
+        data = self.serial_object.read(array_len)
+        return list(struct.unpack('<' + 'B' * array_len, data))
 
-    def read_uint8_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_uint8()
-            message_array.append(message_bytes)
+    def read_uint16_array(self, array_len=1) -> list[int]:
+        data = self.serial_object.read(array_len)
+        return list(struct.unpack('<' + 'H' * array_len * 2, data))
 
-        return message_array
+    def read_uint32_array(self, array_len=1) -> list[int]:
+        data = self.serial_object.read(array_len)
+        return list(struct.unpack('<' + 'I' * array_len * 4, data))
 
-    def read_uint16_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_uint16()
-            message_array.append(message_bytes)
+    def read_uint64_array(self, array_len=1) -> list[int]:
+        data = self.serial_object.read(array_len)
+        return list(struct.unpack('<' + 'Q' * array_len * 8, data))
 
-        return message_array
-
-    def read_uint32_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_uint32()
-            message_array.append(message_bytes)
-
-        return message_array
-
-    def read_float32_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_float32()
-            message_array.append(message_bytes)
-
-        return message_array
+    def read_float32_array(self, array_len=1) -> list[float]:
+        data = self.serial_object.read(array_len)
+        return list(struct.unpack('<' + 'f' * array_len * 4, data))

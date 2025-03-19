@@ -364,8 +364,7 @@ class BpodCOMProtocol(BpodBase):
         self._arcom.write_char(SendMessageHeader.RUN_STATE_MACHINE)
 
     def _bpodcom_get_trial_timestamp_start(self):
-        data = self._arcom.read_bytes_array(8)
-        self.trial_start_micros = ArduinoTypes.cvt_uint64(b''.join(data))
+        self.trial_start_micros = self._arcom.read_uint64()
         return self.trial_start_micros / float(self.hardware.DEFAULT_FREQUENCY_DIVIDER)
 
     def _bpodcom_read_trial_start_timestamp_seconds(self):
@@ -385,15 +384,16 @@ class BpodCOMProtocol(BpodBase):
         return response * self.hardware.times_scale_factor
 
     def _bpodcom_read_timestamps(self):
-
-        data = self._arcom.read_bytes_array(12)
-
-        n_hw_timer_cyles = ArduinoTypes.cvt_uint32(b''.join(data[:4]))
-        trial_end_micros = ArduinoTypes.cvt_uint64(b''.join(data[4:12]))  # / float(self.hardware.DEFAULT_FREQUENCY_DIVIDER)
+        n_hw_timer_cyles, trial_end_micros = self._arcom.read_formatted('<LQ')
         trial_end_timestamp = trial_end_micros / float(self.hardware.DEFAULT_FREQUENCY_DIVIDER)
+
+        # From Sanworks' MATLAB code in RunStateMachine.m:
+        #     Internal check for violations of timing guarantees. Trial time from roll-over compensated
+        #     micros() is compared with the number of hardware timer callbacks executed. These trial
+        #     duration metrics should match if timer callbacks did not exceed the hardware timer interval
         trial_time_from_micros = trial_end_timestamp - self.trial_start_timestamp
-        trial_time_from_cycles = n_hw_timer_cyles/self.hardware.cycle_frequency
-        discrepancy = abs(trial_time_from_micros - trial_time_from_cycles)*1000
+        trial_time_from_cycles = n_hw_timer_cyles / self.hardware.cycle_frequency
+        discrepancy = abs(trial_time_from_micros - trial_time_from_cycles) * 1000
 
         return trial_end_timestamp, discrepancy
 
