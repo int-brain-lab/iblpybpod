@@ -200,20 +200,27 @@ class BpodCOMProtocol(BpodBase):
         logger.debug("Requesting hardware description (%s)...", SendMessageHeader.HARDWARE_DESCRIPTION)
         self._arcom.write_char(SendMessageHeader.HARDWARE_DESCRIPTION)
 
-        (hardware.max_states,        # type: int
-         hardware.cycle_period,      # type: int
-         hardware.max_serial_events, # type: int
-         hardware.n_global_timers,   # type: int
-         hardware.n_global_counters, # type: int
-         hardware.n_conditions,      # type: int
-         hardware.n_inputs           # type: int
-         ) = self._arcom.read_formatted('<HHBBBBB')
+        ints = self._arcom.read_formatted('<HHBBBBB')
+
+        hardware.max_states = ints[0]  # type: int
         logger.debug("Read max states: %s", hardware.max_states)
+
+        hardware.cycle_period = ints[1]  # type: int
         logger.debug("Read cycle period: %s", hardware.cycle_period)
+
+        hardware.max_serial_events = ints[2]  # type: int
         logger.debug("Read number of events per serial channel: %s", hardware.max_serial_events)
+
+        hardware.n_global_timers = ints[3]  # type: int
         logger.debug("Read number of global timers: %s", hardware.n_global_timers)
+
+        hardware.n_global_counters = ints[4]  # type: int
         logger.debug("Read number of global counters: %s", hardware.n_global_counters)
+
+        hardware.n_conditions = ints[5]  # type: int
         logger.debug("Read number of conditions: %s", hardware.n_conditions)
+
+        hardware.n_inputs = ints[6]  # type: int
         logger.debug("Read number of inputs: %s", hardware.n_inputs)
 
         hardware.inputs = self._arcom.read_char_array(array_len=hardware.n_inputs)  # type: list(str)
