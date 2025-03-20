@@ -1,7 +1,10 @@
+import struct
+
 from pybpodapi.com.arcom import ArCOM, ArduinoTypes
 
 
 class RotaryEncoderModule(object):
+    arcom: ArCOM | None = None
 
     COM_HANDSHAKE        = 'C'
     COM_TOGGLEEVTTRANSM  = ord('V')
@@ -45,11 +48,12 @@ class RotaryEncoderModule(object):
         """
         self.arcom.close()
 
-    def __pos_2_degrees(self, pos):
-        return round(((float(pos)/512.0)*180.0)*10.0)/10.0
+    def __pos_2_degrees(self, pos) -> float:
+        # todo: what is the rationale for limiting the precision here?
+        return round(pos / 512.0 * 180.0, 1)
 
-    def __degrees_2_pos(self, degrees):
-        return int(round((float(degrees)/180.0)*512.0, 0))
+    def __degrees_2_pos(self, degrees) -> int:
+        return round(degrees / 180.0 * 512.0)
 
     def enable_evt_transmission(self):
         """
@@ -97,23 +101,19 @@ class RotaryEncoderModule(object):
         """
         res = []
         available = self.arcom.bytes_available()
-
-        if available > 1:
-            msg = self.arcom.read_bytes_array(available)
-
-            while len(msg) >= 7:
-                if msg[0] == b'P':
-                    position = int.from_bytes(b''.join(msg[1:3]), byteorder='little', signed=True)
-                    evt_time = float(int.from_bytes(b''.join(msg[3:7]), byteorder='little', signed=False))/1000.0
-                    position_degrees = self.__pos_2_degrees(position)
-                    res.append(['P', evt_time, position_degrees])
-                elif msg[0] == b'E':
-                    origin = msg[1]
-                    event = msg[2]
-                    evt_time = float(int.from_bytes(b''.join(msg[3:7]), byteorder='little', signed=False))/1000.0
-                    res.append(['E', evt_time, origin, event])
-
-                msg = msg[7:]
+        data = self.arcom.serial_object.read(available)
+        i = 0
+        while i + 7 <= len(data):
+            if data[i] == ord('P'):
+                position, evt_time = struct.unpack('<xhI', data[i : i + 7])
+                evt_time /= 1000.0
+                position_degrees = self.__pos_2_degrees(position)
+                res.append(['P', evt_time, position_degrees])
+            elif data[i] == ord('E'):
+                origin, event, evt_time = struct.unpack('<xccI', data[i : i + 7])
+                evt_time /= 1000.0
+                res.append(['E', evt_time, origin, event])
+            i += 7
 
         return res
 
@@ -122,8 +122,7 @@ class RotaryEncoderModule(object):
         Retrieves the current position.
         """
         self.arcom.write_array([self.COM_GETCURRENTPOS])
-        data_in_bytes = b''.join(self.arcom.read_bytes_array(2))
-        ticks = int.from_bytes(data_in_bytes, byteorder='little', signed=True)
+        ticks = self.arcom.read_int16()
         return self.__pos_2_degrees(ticks)
 
     def set_zero_position(self):
@@ -154,8 +153,7 @@ class RotaryEncoderModule(object):
         if len(thresholds) != 8:
             raise Exception('Thresholds array has to be of length 8')
 
-        string = ''.join(map(lambda x: str(int(x)), thresholds))
-        bits = int(string, 2)
+        bits = sum(bit << (7 - i) for i, bit in enumerate(thresholds))
         self.arcom.write_array([self.COM_ENABLETHRESHOLDS, bits])
 
     def enable_logging(self):
@@ -177,20 +175,17 @@ class RotaryEncoderModule(object):
         self.arcom.write_array([self.COM_GETLOGDATA])
         msg = self.arcom.read_bytes_array(4)
         n_logs = int.from_bytes(b''.join(msg), byteorder='little', signed=False)
-        data = []
-
-        for i in range(0, n_logs):
-            msg = self.arcom.read_bytes_array(8)
-            data_in_bytes = b''.join(msg)
-
-            position = int.from_bytes(data_in_bytes[:4], byteorder='little', signed=True)
-            evt_time = float(int.from_bytes(data_in_bytes[4:], byteorder='little', signed=False))/1000.0
+        data = self.arcom.serial_object.read(n_logs * 8)
+        res = []
+        for i in range(n_logs):
+            pos = i * 8
+            position, evt_time = struct.unpack('<iI', data[pos : pos + 8])
+            evt_time /= 1000.0
             position_degrees = self.__pos_2_degrees(position)
-            data.append((evt_time, position_degrees))
+            res.append((evt_time, position_degrees))
+        return res
 
-        return data
-
-    def set_prefix(self, prefix):
+    def set_prefix(self, prefix) -> bool:
         """
         Sets 1-character prefix for module output stream.
 
@@ -199,7 +194,7 @@ class RotaryEncoderModule(object):
         self.arcom.write_array([self.COM_SETPREFIX, prefix])
         return self.arcom.read_uint8() == 1
 
-    def set_thresholds(self, thresholds):
+    def set_thresholds(self, thresholds) -> bool:
         """
         Sets the thresholds values to trigger the events.
 
@@ -210,7 +205,7 @@ class RotaryEncoderModule(object):
         self.arcom.write_array(data)
         return self.arcom.read_uint8() == 1
 
-    def set_wrappoint(self, wrap_point):
+    def set_wrappoint(self, wrap_point) -> bool:
         """
         Sets wrap point (number of tics in a half-rotation)
 

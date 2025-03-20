@@ -162,6 +162,18 @@ class ArCOM(object):
     def read_float32(self) -> float:
         return self.read_formatted('<f')[0]
 
+    def read_int8(self) -> int:
+        return self.read_formatted('<b')[0]
+
+    def read_int16(self) -> int:
+        return self.read_formatted('<h')[0]
+
+    def read_int32(self) -> int:
+        return self.read_formatted('<i')[0]
+
+    def read_int64(self) -> int:
+        return self.read_formatted('<q')[0]
+
     ##############################################################
     ## READ ARRAY ################################################
     ##############################################################
