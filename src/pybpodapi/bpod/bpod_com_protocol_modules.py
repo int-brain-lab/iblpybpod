@@ -42,7 +42,7 @@ class BpodCOMProtocolModules(BpodCOMProtocol):
         self._arcom.write_char(SendMessageHeader.GET_MODULES)
         time.sleep(0.3)
 
-        modules_requested_events = np.array([0] * n_modules)
+        modules_requested_events = np.zeros(n_modules, int)
 
         names = {}
 
@@ -149,9 +149,7 @@ class BpodCOMProtocolModules(BpodCOMProtocol):
         )
 
     def _bpodcom_clean_any_data_in_the_buffer(self):
-        n_bytes_available = self.bytes_available()
-        if n_bytes_available > 0:
-            self._arcom.read_uint8_array(n_bytes_available)
+        self._arcom.serial_object.reset_input_buffer()
 
     def _bpodcom_module_write(self, module_index, message, dtype=None):
         if dtype is None:
@@ -177,13 +175,10 @@ class BpodCOMProtocolModules(BpodCOMProtocol):
         self._arcom.write_array(to_send + msg)
 
     def _bpodcom_module_read(self, module_index, size, dtype=None):
-        if dtype is None:
-            dtype = ArduinoTypes.UINT8
-
-        if dtype == ArduinoTypes.CHAR:
-            return self._arcom.read_char_array(size)
-        elif dtype == ArduinoTypes.UINT8:
+        if dtype in (ArduinoTypes.UINT8, None):
             return self._arcom.read_uint8_array(size)
+        elif dtype == ArduinoTypes.CHAR:
+            return self._arcom.read_char_array(size)
         elif dtype == ArduinoTypes.UINT16:
             return self._arcom.read_uint16_array(size)
         elif dtype == ArduinoTypes.UINT32:
@@ -191,4 +186,4 @@ class BpodCOMProtocolModules(BpodCOMProtocol):
         elif dtype == ArduinoTypes.FLOAT32:
             return self._arcom.read_float32_array(size)
         else:
-            return None
+            raise BpodErrorException(f"dtype {dtype} not supported by _bpodcom_module_read()")

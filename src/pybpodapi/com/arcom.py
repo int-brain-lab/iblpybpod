@@ -2,15 +2,18 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from typing import Sequence
+
 import serial
-import numpy as np
 import struct
+
+from pybpodapi.exceptions.bpod_error import BpodErrorException
 
 logger = logging.getLogger(__name__)
 
 
 class DataType(object):
-    def __init__(self, name, size):
+    def __init__(self, name: str, size: int):
         self.name = name
         self.size = size
 
@@ -30,54 +33,60 @@ class ArduinoTypes(object):
     FLOAT64 = DataType("float64", 8)
 
     @staticmethod
-    def get_array(array, dtype):
-        if dtype == ArduinoTypes.CHAR or dtype == ArduinoTypes.UINT8:
+    def get_array(array: Sequence, dtype: DataType) -> bytes:
+        if dtype in (ArduinoTypes.CHAR, ArduinoTypes.UINT8):
             return ArduinoTypes.get_uint8_array(array)
         elif dtype == ArduinoTypes.UINT16:
             return ArduinoTypes.get_uint16_array(array)
-        elif dtype == ArduinoTypes.UINT32 or dtype == ArduinoTypes.FLOAT:
+        elif dtype == ArduinoTypes.UINT32:
             return ArduinoTypes.get_uint32_array(array)
+        elif dtype == ArduinoTypes.FLOAT32:
+            return ArduinoTypes.get_float32_array(array)
         else:
-            return None
+            raise BpodErrorException(f"dtype {dtype} not supported by get_array()")
 
     @staticmethod
-    def get_uint8_array(array):
-        return np.array(array, dtype=str(ArduinoTypes.UINT8)).tobytes()
+    def get_uint8_array(array) -> bytes:
+        return struct.pack('<' + 'B' * len(array), *array)
 
     @staticmethod
-    def get_int16_array(array):
-        return np.array(array, dtype=str(ArduinoTypes.INT16)).tobytes()
+    def get_int16_array(array) -> bytes:
+        return struct.pack('<' + 'h' * len(array), *array)
 
     @staticmethod
-    def get_uint16_array(array):
-        return np.array(array, dtype=str(ArduinoTypes.UINT16)).tobytes()
+    def get_uint16_array(array) -> bytes:
+        return struct.pack('<' + 'H' * len(array), *array)
 
     @staticmethod
-    def get_uint32_array(array):
-        return np.array(array, dtype=str(ArduinoTypes.UINT32)).tobytes()
+    def get_uint32_array(array) -> bytes:
+        return struct.pack('<' + 'I' * len(array), *array)
 
     @staticmethod
-    def get_float(value):
+    def get_float32_array(array) -> bytes:
+        return struct.pack('<' + 'f' * len(array), *array)
+
+    @staticmethod
+    def get_float(value) -> bytes:
         return struct.pack("<f", value)
 
     @staticmethod
-    def cvt_float32(message_bytes):
+    def cvt_float32(message_bytes) -> float:
         return struct.unpack("<f", message_bytes)[0]
 
     @staticmethod
-    def cvt_float64(message_bytes):
+    def cvt_float64(message_bytes) -> float:
         return struct.unpack("<d", message_bytes)[0]
 
     @staticmethod
-    def cvt_int64(message_bytes):
-        return int.from_bytes(message_bytes, byteorder="little")
+    def cvt_int64(message_bytes) -> int:
+        return struct.unpack("<q", message_bytes)[0]
 
     @staticmethod
-    def cvt_uint32(message_bytes):
+    def cvt_uint32(message_bytes) -> int:
         return struct.unpack("<L", message_bytes)[0]
 
     @staticmethod
-    def cvt_uint64(message_bytes):
+    def cvt_uint64(message_bytes) -> int:
         return struct.unpack("<Q", message_bytes)[0]
 
 
@@ -117,10 +126,10 @@ class ArCOM(object):
     ## WRITE #####################################################
     ##############################################################
 
-    def write_char(self, value):
+    def write_char(self, value) -> None:
         self.serial_object.write(str.encode(value))
 
-    def write_array(self, array):
+    def write_array(self, array) -> None:
         self.serial_object.write(array)
 
     ##############################################################
