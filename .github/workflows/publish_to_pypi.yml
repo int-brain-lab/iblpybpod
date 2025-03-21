@@ -3,13 +3,8 @@
 name: Publish to PyPI
 
 on:
-  push:
-    branches-ignore:
-      - no-gui
-    tags-ignore:
-      - *-no-gui
-    tags:
-      - v+.+.+
+  release:
+    types: [ published ]
 
 permissions:
   contents: read
