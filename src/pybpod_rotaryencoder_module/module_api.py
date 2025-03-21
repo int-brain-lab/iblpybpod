@@ -105,12 +105,12 @@ class RotaryEncoderModule(object):
         i = 0
         while i + 7 <= len(data):
             if data[i] == ord('P'):
-                position, evt_time = struct.unpack('<xhI', data[i : i + 7])
+                position, evt_time = struct.unpack_from('<xhI', data, i)
                 evt_time /= 1000.0
                 position_degrees = self.__pos_2_degrees(position)
                 res.append(['P', evt_time, position_degrees])
             elif data[i] == ord('E'):
-                origin, event, evt_time = struct.unpack('<xccI', data[i : i + 7])
+                origin, event, evt_time = struct.unpack_from('<xccI', data, i)
                 evt_time /= 1000.0
                 res.append(['E', evt_time, origin, event])
             i += 7
@@ -179,7 +179,7 @@ class RotaryEncoderModule(object):
         res = []
         for i in range(n_logs):
             pos = i * 8
-            position, evt_time = struct.unpack('<iI', data[pos : pos + 8])
+            position, evt_time = struct.unpack_from('<iI', data, pos)
             evt_time /= 1000.0
             position_degrees = self.__pos_2_degrees(position)
             res.append((evt_time, position_degrees))
