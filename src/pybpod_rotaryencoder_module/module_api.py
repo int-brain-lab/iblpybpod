@@ -176,14 +176,7 @@ class RotaryEncoderModule(object):
         msg = self.arcom.read_bytes_array(4)
         n_logs = int.from_bytes(b''.join(msg), byteorder='little', signed=False)
         data = self.arcom.serial_object.read(n_logs * 8)
-        res = []
-        for i in range(n_logs):
-            pos = i * 8
-            position, evt_time = struct.unpack_from('<iI', data, pos)
-            evt_time /= 1000.0
-            position_degrees = self.__pos_2_degrees(position)
-            res.append((evt_time, position_degrees))
-        return res
+        return [(evt_time / 1000.0, self.__pos_2_degrees(pos)) for pos, evt_time in struct.iter_unpack('<iI', data)]
 
     def set_prefix(self, prefix) -> bool:
         """
