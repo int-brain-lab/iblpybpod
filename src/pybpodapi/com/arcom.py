@@ -2,15 +2,19 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import serial
+from typing import Sequence
+
 import numpy as np
+import serial
 import struct
+
+from pybpodapi.exceptions.bpod_error import BpodErrorException
 
 logger = logging.getLogger(__name__)
 
 
 class DataType(object):
-    def __init__(self, name, size):
+    def __init__(self, name: str, size: int):
         self.name = name
         self.size = size
 
@@ -30,54 +34,68 @@ class ArduinoTypes(object):
     FLOAT64 = DataType("float64", 8)
 
     @staticmethod
-    def get_array(array, dtype):
-        if dtype == ArduinoTypes.CHAR or dtype == ArduinoTypes.UINT8:
+    def get_array(array: Sequence, dtype: DataType) -> bytes:
+        if dtype in (ArduinoTypes.CHAR, ArduinoTypes.UINT8):
             return ArduinoTypes.get_uint8_array(array)
         elif dtype == ArduinoTypes.UINT16:
             return ArduinoTypes.get_uint16_array(array)
-        elif dtype == ArduinoTypes.UINT32 or dtype == ArduinoTypes.FLOAT:
+        elif dtype == ArduinoTypes.UINT32:
             return ArduinoTypes.get_uint32_array(array)
+        elif dtype == ArduinoTypes.FLOAT32:
+            return ArduinoTypes.get_float32_array(array)
         else:
-            return None
+            raise BpodErrorException(f"dtype {dtype} not supported by get_array()")
 
     @staticmethod
-    def get_uint8_array(array):
+    def get_uint8_array(array) -> bytes:
         return np.array(array, dtype=str(ArduinoTypes.UINT8)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'B' * len(array), *array)
 
     @staticmethod
-    def get_int16_array(array):
+    def get_int16_array(array) -> bytes:
         return np.array(array, dtype=str(ArduinoTypes.INT16)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'h' * len(array), *array)
 
     @staticmethod
-    def get_uint16_array(array):
+    def get_uint16_array(array) -> bytes:
         return np.array(array, dtype=str(ArduinoTypes.UINT16)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'H' * len(array), *array)
 
     @staticmethod
-    def get_uint32_array(array):
+    def get_uint32_array(array) -> bytes:
         return np.array(array, dtype=str(ArduinoTypes.UINT32)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'I' * len(array), *array)
 
     @staticmethod
-    def get_float(value):
+    def get_float32_array(array) -> bytes:
+        return struct.pack('<' + 'f' * len(array), *array)
+
+    @staticmethod
+    def get_float(value) -> bytes:
         return struct.pack("<f", value)
 
     @staticmethod
-    def cvt_float32(message_bytes):
+    def cvt_float32(message_bytes) -> float:
         return struct.unpack("<f", message_bytes)[0]
 
     @staticmethod
-    def cvt_float64(message_bytes):
+    def cvt_float64(message_bytes) -> float:
         return struct.unpack("<d", message_bytes)[0]
 
     @staticmethod
-    def cvt_int64(message_bytes):
-        return int.from_bytes(message_bytes, byteorder="little")
+    def cvt_int64(message_bytes) -> int:
+        return struct.unpack("<q", message_bytes)[0]
 
     @staticmethod
-    def cvt_uint32(message_bytes):
+    def cvt_uint32(message_bytes) -> int:
         return struct.unpack("<L", message_bytes)[0]
 
     @staticmethod
-    def cvt_uint64(message_bytes):
+    def cvt_uint64(message_bytes) -> int:
         return struct.unpack("<Q", message_bytes)[0]
 
 
@@ -117,102 +135,82 @@ class ArCOM(object):
     ## WRITE #####################################################
     ##############################################################
 
-    def write_char(self, value):
+    def write_char(self, value) -> None:
         self.serial_object.write(str.encode(value))
 
-    def write_array(self, array):
+    def write_array(self, array) -> None:
         self.serial_object.write(array)
 
     ##############################################################
     ## READ BYTE #################################################
     ##############################################################
 
-    def read_byte(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.BYTE.size)
-        return message_bytes
+    def read_formatted(self, format_string: str) -> tuple:
+        n_bytes = struct.calcsize(format_string)
+        data = self.serial_object.read(n_bytes)
+        return struct.unpack(format_string, data)
 
-    def read_char(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.CHAR.size)
+    def iter_read_formatted(self, format_string: str, n_iterations: int) -> tuple:
+        n_bytes = struct.calcsize(format_string) * n_iterations
+        data = self.serial_object.read(n_bytes)
+        return struct.iter_unpack(format_string, data)
 
-        return message_bytes.decode("utf-8")
+    def read_byte(self) -> bytes:
+        return self.serial_object.read(1)
 
-    def read_uint8(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT8.size)
-        # logger.debug("Read %s bytes: %s", len(message_bytes), message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
-        return message
+    def read_char(self) -> str:
+        return self.serial_object.read(1).decode("utf-8")
 
-    def read_uint16(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT16.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT16.size, message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
-        return message
+    def read_uint8(self) -> int:
+        return self.read_formatted('<B')[0]
 
-    def read_uint32(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT32.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT32.size, message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
-        return message
+    def read_uint16(self) -> int:
+        return self.read_formatted('<H')[0]
 
-    def read_uint64(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.UINT64.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT32.size, message_bytes)
-        message = int.from_bytes(message_bytes, byteorder="little")
-        return message
+    def read_uint32(self) -> int:
+        return self.read_formatted('<I')[0]
 
-    def read_float32(self):
-        message_bytes = self.serial_object.read(ArduinoTypes.FLOAT32.size)
-        # logger.debug("Read %s bytes: %s", ArduinoTypes.UINT32.size, message_bytes)
-        message = struct.unpack("<f", message_bytes)
-        return message[0]
+    def read_uint64(self) -> int:
+        return self.read_formatted('<Q')[0]
+
+    def read_float32(self) -> float:
+        return self.read_formatted('<f')[0]
+
+    def read_int8(self) -> int:
+        return self.read_formatted('<b')[0]
+
+    def read_int16(self) -> int:
+        return self.read_formatted('<h')[0]
+
+    def read_int32(self) -> int:
+        return self.read_formatted('<i')[0]
+
+    def read_int64(self) -> int:
+        return self.read_formatted('<q')[0]
 
     ##############################################################
     ## READ ARRAY ################################################
     ##############################################################
 
-    def read_bytes_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_byte()
-            message_array.append(message_bytes)
-        return message_array
+    def read_bytes_array(self, array_len=1) -> list[bytes]:
+        data = self.serial_object.read(array_len)
+        return [bytes([byte]) for byte in data]
 
-    def read_char_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_char()
-            message_array.append(message_bytes)
+    def read_char_array(self, array_len=1) -> list[str]:
+        data = self.serial_object.read(array_len)
+        return list(data.decode('UTF8'))
 
-        return message_array
+    def read_uint8_array(self, array_len=1) -> list[int]:
+        return list(self.read_formatted('<' + 'B' * array_len))
 
-    def read_uint8_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_uint8()
-            message_array.append(message_bytes)
+    def read_uint16_array(self, array_len=1) -> list[int]:
+        return list(self.read_formatted('<' + 'H' * array_len))
 
-        return message_array
+    def read_uint32_array(self, array_len=1) -> list[int]:
+        return list(self.read_formatted('<' + 'I' * array_len))
 
-    def read_uint16_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_uint16()
-            message_array.append(message_bytes)
+    def read_uint64_array(self, array_len=1) -> list[int]:
+        return list(self.read_formatted('<' + 'Q' * array_len))
 
-        return message_array
-
-    def read_uint32_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_uint32()
-            message_array.append(message_bytes)
-
-        return message_array
-
-    def read_float32_array(self, array_len=1):
-        message_array = []
-        for pos in range(0, array_len):
-            message_bytes = self.read_float32()
-            message_array.append(message_bytes)
-
-        return message_array
+    def read_float32_array(self, array_len=1) -> list[float]:
+        return list(self.read_formatted('<' + 'f' * array_len))

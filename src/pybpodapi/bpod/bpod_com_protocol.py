@@ -142,8 +142,7 @@ class BpodCOMProtocol(BpodBase):
 
         self._arcom.write_char(SendMessageHeader.FIRMWARE_VERSION)
 
-        fw_version = self._arcom.read_uint16()  # type: int
-        machine_type = self._arcom.read_uint16()  # type: int
+        fw_version, machine_type = self._arcom.read_formatted('<HH')
 
         logger.debug("Firmware version: %s", fw_version)
         logger.debug("Machine type: %s", machine_type)
@@ -201,44 +200,37 @@ class BpodCOMProtocol(BpodBase):
         logger.debug("Requesting hardware description (%s)...", SendMessageHeader.HARDWARE_DESCRIPTION)
         self._arcom.write_char(SendMessageHeader.HARDWARE_DESCRIPTION)
 
-        max_states = self._arcom.read_uint16()  # type: int
-        logger.debug("Read max states: %s", max_states)
+        ints = self._arcom.read_formatted('<HHBBBBB')
 
-        cycle_period = self._arcom.read_uint16()  # type: int
-        logger.debug("Read cycle period: %s", cycle_period)
+        hardware.max_states = ints[0]  # type: int
+        logger.debug("Read max states: %s", hardware.max_states)
 
-        max_serial_events = self._arcom.read_uint8()  # type: int
-        logger.debug("Read number of events per serial channel: %s", max_serial_events)
+        hardware.cycle_period = ints[1]  # type: int
+        logger.debug("Read cycle period: %s", hardware.cycle_period)
 
-        n_global_timers = self._arcom.read_uint8()  # type: int
-        logger.debug("Read number of global timers: %s", n_global_timers)
+        hardware.max_serial_events = ints[2]  # type: int
+        logger.debug("Read number of events per serial channel: %s", hardware.max_serial_events)
 
-        n_global_counters = self._arcom.read_uint8()  # type: int
-        logger.debug("Read number of global counters: %s", n_global_counters)
+        hardware.n_global_timers = ints[3]  # type: int
+        logger.debug("Read number of global timers: %s", hardware.n_global_timers)
 
-        n_conditions = self._arcom.read_uint8()  # type: int
-        logger.debug("Read number of conditions: %s", n_conditions)
+        hardware.n_global_counters = ints[4]  # type: int
+        logger.debug("Read number of global counters: %s", hardware.n_global_counters)
 
-        n_inputs = self._arcom.read_uint8()  # type: int
-        logger.debug("Read number of inputs: %s", n_inputs)
+        hardware.n_conditions = ints[5]  # type: int
+        logger.debug("Read number of conditions: %s", hardware.n_conditions)
 
-        inputs = self._arcom.read_char_array(array_len=n_inputs)  # type: list(str)
-        logger.debug("Read inputs: %s", inputs)
+        hardware.n_inputs = ints[6]  # type: int
+        logger.debug("Read number of inputs: %s", hardware.n_inputs)
 
-        n_outputs = self._arcom.read_uint8()  # type: int
-        logger.debug("Read number of outputs: %s", n_outputs)
+        hardware.inputs = self._arcom.read_char_array(array_len=hardware.n_inputs)  # type: list(str)
+        logger.debug("Read inputs: %s", hardware.inputs)
 
-        outputs = self._arcom.read_char_array(array_len=n_outputs)  # type: list(str)
-        logger.debug("Read outputs: %s", outputs)
+        hardware.n_outputs = self._arcom.read_uint8()  # type: int
+        logger.debug("Read number of outputs: %s", hardware.n_outputs)
 
-        hardware.max_states = max_states
-        hardware.cycle_period = cycle_period
-        hardware.max_serial_events = max_serial_events
-        hardware.n_global_timers = n_global_timers
-        hardware.n_global_counters = n_global_counters
-        hardware.n_conditions = n_conditions
-        hardware.inputs = inputs
-        hardware.outputs = outputs  # + ['G', 'G', 'G']
+        hardware.outputs = self._arcom.read_char_array(array_len=hardware.n_outputs)  # type: list(str)
+        logger.debug("Read outputs: %s", hardware.outputs)
 
         hardware.live_timestamps = self._bpodcom_get_timestamp_transmission()
 
@@ -364,8 +356,7 @@ class BpodCOMProtocol(BpodBase):
         self._arcom.write_char(SendMessageHeader.RUN_STATE_MACHINE)
 
     def _bpodcom_get_trial_timestamp_start(self):
-        data = self._arcom.read_bytes_array(8)
-        self.trial_start_micros = ArduinoTypes.cvt_uint64(b''.join(data))
+        self.trial_start_micros = self._arcom.read_uint64()
         return self.trial_start_micros / float(self.hardware.DEFAULT_FREQUENCY_DIVIDER)
 
     def _bpodcom_read_trial_start_timestamp_seconds(self):
@@ -385,15 +376,16 @@ class BpodCOMProtocol(BpodBase):
         return response * self.hardware.times_scale_factor
 
     def _bpodcom_read_timestamps(self):
-
-        data = self._arcom.read_bytes_array(12)
-
-        n_hw_timer_cyles = ArduinoTypes.cvt_uint32(b''.join(data[:4]))
-        trial_end_micros = ArduinoTypes.cvt_uint64(b''.join(data[4:12]))  # / float(self.hardware.DEFAULT_FREQUENCY_DIVIDER)
+        n_hw_timer_cyles, trial_end_micros = self._arcom.read_formatted('<LQ')
         trial_end_timestamp = trial_end_micros / float(self.hardware.DEFAULT_FREQUENCY_DIVIDER)
+
+        # From Sanworks' MATLAB code in RunStateMachine.m:
+        #     Internal check for violations of timing guarantees. Trial time from roll-over compensated
+        #     micros() is compared with the number of hardware timer callbacks executed. These trial
+        #     duration metrics should match if timer callbacks did not exceed the hardware timer interval
         trial_time_from_micros = trial_end_timestamp - self.trial_start_timestamp
-        trial_time_from_cycles = n_hw_timer_cyles/self.hardware.cycle_frequency
-        discrepancy = abs(trial_time_from_micros - trial_time_from_cycles)*1000
+        trial_time_from_cycles = n_hw_timer_cyles / self.hardware.cycle_frequency
+        discrepancy = abs(trial_time_from_micros - trial_time_from_cycles) * 1000
 
         return trial_end_timestamp, discrepancy
 
