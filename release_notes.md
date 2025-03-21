@@ -1,4 +1,8 @@
 # **Release Notes**
+## **v3.1.0 (2025-03-21)**
+- remove bottlenecks in serial communication
+- add arguments for disabling behavior ports
+
 ## **v3.0.2 (2023-09-11)**
 - add argument to disable behavior ports
 
