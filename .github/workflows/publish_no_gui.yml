@@ -4,8 +4,6 @@ name: Publish to PyPI (no-gui branch)
 
 on:
   push:
-    branches-ignore:
-      - main
     tags:
       - v+.+.+-no-gui
 
