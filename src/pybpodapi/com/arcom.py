@@ -4,6 +4,7 @@
 import logging
 from typing import Sequence
 
+import numpy as np
 import serial
 import struct
 
@@ -47,19 +48,27 @@ class ArduinoTypes(object):
 
     @staticmethod
     def get_uint8_array(array) -> bytes:
-        return struct.pack('<' + 'B' * len(array), *array)
+        return np.array(array, dtype=str(ArduinoTypes.UINT8)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'B' * len(array), *array)
 
     @staticmethod
     def get_int16_array(array) -> bytes:
-        return struct.pack('<' + 'h' * len(array), *array)
+        return np.array(array, dtype=str(ArduinoTypes.INT16)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'h' * len(array), *array)
 
     @staticmethod
     def get_uint16_array(array) -> bytes:
-        return struct.pack('<' + 'H' * len(array), *array)
+        return np.array(array, dtype=str(ArduinoTypes.UINT16)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'H' * len(array), *array)
 
     @staticmethod
     def get_uint32_array(array) -> bytes:
-        return struct.pack('<' + 'I' * len(array), *array)
+        return np.array(array, dtype=str(ArduinoTypes.UINT32)).tobytes()
+        # the above will coerce floats to ints! Alternative:
+        # return struct.pack('<' + 'I' * len(array), *array)
 
     @staticmethod
     def get_float32_array(array) -> bytes:
@@ -140,6 +149,11 @@ class ArCOM(object):
         n_bytes = struct.calcsize(format_string)
         data = self.serial_object.read(n_bytes)
         return struct.unpack(format_string, data)
+
+    def iter_read_formatted(self, format_string: str, n_iterations: int) -> tuple:
+        n_bytes = struct.calcsize(format_string) * n_iterations
+        data = self.serial_object.read(n_bytes)
+        return struct.iter_unpack(format_string, data)
 
     def read_byte(self) -> bytes:
         return self.serial_object.read(1)
