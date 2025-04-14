@@ -589,9 +589,6 @@ class BpodBase(object):
             end_time=trial_end_timestamp
         )
 
-        if discrepancy > 1:
-            self.session += WarningMessage("Bpod missed hardware update deadline(s) on the past trial by ~{milliseconds}ms".format(milliseconds=discrepancy))
-
         if self.hardware.live_timestamps:
             timestamps = self.trial_timestamps
         else:

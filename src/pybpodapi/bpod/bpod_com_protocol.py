@@ -376,7 +376,7 @@ class BpodCOMProtocol(BpodBase):
         return response * self.hardware.times_scale_factor
 
     def _bpodcom_read_timestamps(self):
-        n_hw_timer_cyles, trial_end_micros = self._arcom.read_formatted('<LQ')
+        n_hw_timer_cycles, trial_end_micros = self._arcom.read_formatted('<LQ')
         trial_end_timestamp = trial_end_micros / float(self.hardware.DEFAULT_FREQUENCY_DIVIDER)
 
         # From Sanworks' MATLAB code in RunStateMachine.m:
@@ -384,8 +384,12 @@ class BpodCOMProtocol(BpodBase):
         #     micros() is compared with the number of hardware timer callbacks executed. These trial
         #     duration metrics should match if timer callbacks did not exceed the hardware timer interval
         trial_time_from_micros = trial_end_timestamp - self.trial_start_timestamp
-        trial_time_from_cycles = n_hw_timer_cyles / self.hardware.cycle_frequency
+        trial_time_from_cycles = n_hw_timer_cycles / self.hardware.cycle_frequency
         discrepancy = abs(trial_time_from_micros - trial_time_from_cycles) * 1000
+        if discrepancy > 1:
+            self.session += WarningMessage("Bpod missed hardware update deadline(s) on the past trial by ~{milliseconds}ms".format(milliseconds=discrepancy))
+            self.session += WarningMessage("Trial start: {t0:g}s; trial end: {t1}us; number of cycles at trial end: {t2}".format(
+                t0=self.trial_start_timestamp, t1=trial_end_micros, t2=n_hw_timer_cycles))
 
         return trial_end_timestamp, discrepancy
 

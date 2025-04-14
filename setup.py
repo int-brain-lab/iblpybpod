@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 PYTHON_VERSION_REQ = ">=3.10.0"
-IBLPYBPOD_CURRENT_VERSION = "3.1.0"
+IBLPYBPOD_CURRENT_VERSION = "3.1.1"
 
 long_description = """
 iblpybpod enables interaction with the Bpod device from [Sanworks](https://sanworks.io/). Much credit 

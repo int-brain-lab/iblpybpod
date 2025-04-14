@@ -1,4 +1,7 @@
 # **Release Notes**
+## **v3.1.1 (2025-04-14)**
+- increase logging verbosity when "missing hardware deadline" in `BpodCOMProtocol._bpodcom_read_timestamps()`
+ 
 ## **v3.1.0 (2025-03-21)**
 - remove bottlenecks in serial communication
 - add arguments for disabling behavior ports
