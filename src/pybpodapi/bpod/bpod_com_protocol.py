@@ -8,6 +8,7 @@ from pybpodapi.bpod.bpod_base import BpodBase
 from pybpodapi.bpod.hardware.channels import ChannelType
 from pybpodapi.bpod_modules.bpod_module import BpodModule
 from pybpodapi.com.arcom import ArCOM, ArduinoTypes
+from pybpodapi.com.messaging.warning import WarningMessage
 from pybpodapi.com.protocol.recv_msg_headers import ReceiveMessageHeader
 from pybpodapi.com.protocol.send_msg_headers import SendMessageHeader
 from pybpodapi.exceptions.bpod_error import BpodErrorException
