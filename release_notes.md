@@ -1,4 +1,8 @@
 # **Release Notes**
+## **v3.1.2 (2026-03-30)**
+- fix missing import of `WarningMessage` in `bpod_com_protocol` module
+- optimize binary data reading with pre-compiled structs
+
 ## **v3.1.1 (2025-04-14)**
 - increase logging verbosity when "missing hardware deadline" in `BpodCOMProtocol._bpodcom_read_timestamps()`
  

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from struct import Struct
 from typing import Sequence
 
 import numpy as np
@@ -12,6 +13,25 @@ from pybpodapi.exceptions.bpod_error import BpodErrorException
 
 logger = logging.getLogger(__name__)
 
+# pre-compiled structs for common data types
+STRUCT_UINT16_LE = Struct('<H')
+"""Compiled struct representing an unsigned 16-bit integer (little-endian)."""
+STRUCT_UINT32_LE = Struct('<I')
+"""Compiled struct representing an unsigned 32-bit integer (little-endian)."""
+STRUCT_UINT64_LE = Struct('<Q')
+"""Compiled struct representing an unsigned 64-bit integer (little-endian)."""
+STRUCT_INT8 = Struct('b')
+"""Compiled struct representing a signed 8-bit integer."""
+STRUCT_INT16_LE = Struct('<h')
+"""Compiled struct representing a signed 16-bit integer (little-endian)."""
+STRUCT_INT32_LE = Struct('<i')
+"""Compiled struct representing a signed 32-bit integer (little-endian)."""
+STRUCT_INT64_LE = Struct('<q')
+"""Compiled struct representing a signed 64-bit integer (little-endian)."""
+STRUCT_FLOAT32_LE = Struct('<f')
+"""Compiled struct representing a 32-bit floating-point number (little-endian)."""
+STRUCT_FLOAT64_LE = Struct('<d')
+"""Compiled struct representing a 64-bit floating-point number (little-endian)."""
 
 class DataType(object):
     def __init__(self, name: str, size: int):
@@ -76,27 +96,27 @@ class ArduinoTypes(object):
 
     @staticmethod
     def get_float(value) -> bytes:
-        return struct.pack("<f", value)
+        return STRUCT_FLOAT32_LE.pack(value)
 
     @staticmethod
     def cvt_float32(message_bytes) -> float:
-        return struct.unpack("<f", message_bytes)[0]
+        return STRUCT_FLOAT32_LE.unpack(message_bytes)[0]
 
     @staticmethod
     def cvt_float64(message_bytes) -> float:
-        return struct.unpack("<d", message_bytes)[0]
+        return STRUCT_FLOAT64_LE.unpack(message_bytes)[0]
 
     @staticmethod
     def cvt_int64(message_bytes) -> int:
-        return struct.unpack("<q", message_bytes)[0]
+        return STRUCT_INT64_LE.unpack(message_bytes)[0]
 
     @staticmethod
     def cvt_uint32(message_bytes) -> int:
-        return struct.unpack("<L", message_bytes)[0]
+        return STRUCT_UINT32_LE.unpack(message_bytes)[0]
 
     @staticmethod
     def cvt_uint64(message_bytes) -> int:
-        return struct.unpack("<Q", message_bytes)[0]
+        return STRUCT_UINT64_LE.unpack(message_bytes)[0]
 
 
 class ArCOM(object):
@@ -162,31 +182,40 @@ class ArCOM(object):
         return self.serial_object.read(1).decode("utf-8")
 
     def read_uint8(self) -> int:
-        return self.read_formatted('<B')[0]
+        """Read an 8-bit unsigned integer."""
+        return self.serial_object.read(1)[0]  # type: ignore[no-any-return]
 
     def read_uint16(self) -> int:
-        return self.read_formatted('<H')[0]
+        """Read a 16-bit unsigned integer (little-endian)."""
+        return STRUCT_UINT16_LE.unpack(self.serial_object.read(2))[0]  # type: ignore[no-any-return]
 
     def read_uint32(self) -> int:
-        return self.read_formatted('<I')[0]
+        """Read a 32-bit unsigned integer (little-endian)."""
+        return STRUCT_UINT32_LE.unpack(self.serial_object.read(4))[0]  # type: ignore[no-any-return]
 
     def read_uint64(self) -> int:
-        return self.read_formatted('<Q')[0]
+        """Read a 64-bit unsigned integer (little-endian)."""
+        return STRUCT_UINT64_LE.unpack(self.serial_object.read(8))[0]  # type: ignore[no-any-return]
 
     def read_float32(self) -> float:
-        return self.read_formatted('<f')[0]
+        """Read a 32-bit floating-point number (little-endian)."""
+        return STRUCT_FLOAT32_LE.unpack(self.serial_object.read(4))[0]
 
     def read_int8(self) -> int:
-        return self.read_formatted('<b')[0]
+        """Read an 8-bit signed integer."""
+        return STRUCT_INT8.unpack(self.serial_object.read(1))[0]  # type: ignore[no-any-return]
 
     def read_int16(self) -> int:
-        return self.read_formatted('<h')[0]
+        """Read a 16-bit signed integer (little-endian)."""
+        return STRUCT_INT16_LE.unpack(self.serial_object.read(2))[0]  # type: ignore[no-any-return]
 
     def read_int32(self) -> int:
-        return self.read_formatted('<i')[0]
+        """Read a 32-bit signed integer (little-endian)."""
+        return STRUCT_INT32_LE.unpack(self.serial_object.read(4))[0]  # type: ignore[no-any-return]
 
     def read_int64(self) -> int:
-        return self.read_formatted('<q')[0]
+        """Read a 64-bit signed integer (little-endian)."""
+        return STRUCT_INT64_LE.unpack(self.serial_object.read(8))[0]  # type: ignore[no-any-return]
 
     ##############################################################
     ## READ ARRAY ################################################
